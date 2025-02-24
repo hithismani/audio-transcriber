@@ -19,7 +19,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Initialize the OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+if not openai_api_key:
+    st.warning("Please set your OpenAI API key in the .env file or as an environment variable.  See the README for instructions.")
+    client = None  # Disable OpenAI client if API key is missing
+else:
+    client = OpenAI(api_key=openai_api_key)
 
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB
 CHUNK_SIZE = 24 * 1024 * 1024  # 24 MB for safety
@@ -70,6 +76,9 @@ def transcribe_file(uploaded_file, timestamp_option):
     """
     if uploaded_file is None:
         return "Please upload a file.", None
+
+    if client is None:
+        return "OpenAI API key not configured. Please set it to use this feature.", None
 
     try:
         # Save the uploaded file to a temporary file
@@ -211,33 +220,36 @@ if uploaded_file is not None:
 timestamp_option = st.checkbox("Include timestamps?")
 
 if st.session_state.uploaded_file is not None:
-    with st.spinner("Transcribing..."):
-        transcript, transcript_file_path = transcribe_file(st.session_state.uploaded_file, timestamp_option)
+    if client is None:
+        st.error("Please configure your OpenAI API key to enable transcription.")
+    else:
+        with st.spinner("Transcribing..."):
+            transcript, transcript_file_path = transcribe_file(st.session_state.uploaded_file, timestamp_option)
 
-        if transcript:
-            # st.write("Transcription:")
-            st.text_area("Transcription:", transcript, height=300) # Larger text area
+            if transcript:
+                # st.write("Transcription:")
+                st.text_area("Transcription:", transcript, height=300) # Larger text area
 
-            if transcript_file_path:
-                try:
-                    with open(transcript_file_path, "rb") as f:
-                        st.download_button(
-                            label="Download Transcript",
-                            data=f,
-                            file_name=Path(st.session_state.uploaded_file.name).stem + "_transcript.txt",
-                            mime="text/plain"
-                        )
-                except Exception as e:
-                    st.error(f"Error preparing download: {e}")
-                    logger.error(f"Error opening transcript file for download: {e}")
-                finally:
-                    #Clean up transcript file after download attempt
+                if transcript_file_path:
                     try:
-                        os.unlink(transcript_file_path)
+                        with open(transcript_file_path, "rb") as f:
+                            st.download_button(
+                                label="Download Transcript",
+                                data=f,
+                                file_name=Path(st.session_state.uploaded_file.name).stem + "_transcript.txt",
+                                mime="text/plain"
+                            )
                     except Exception as e:
-                         logger.error(f"Error deleting transcript file {transcript_file_path}: {e}")
-        else:
-            st.error("Transcription failed. See logs for details.")
+                        st.error(f"Error preparing download: {e}")
+                        logger.error(f"Error opening transcript file for download: {e}")
+                    finally:
+                        #Clean up transcript file after download attempt
+                        try:
+                            os.unlink(transcript_file_path)
+                        except Exception as e:
+                             logger.error(f"Error deleting transcript file {transcript_file_path}: {e}")
+            else:
+                st.error("Transcription failed. See logs for details.")
 
-    # Clear the uploaded file after processing
-    st.session_state.uploaded_file = None
+        # Clear the uploaded file after processing
+        st.session_state.uploaded_file = None
