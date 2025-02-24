@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+openai = "*"
+pydub = "==0.25.1"
+python-dotenv = "==1.0.0"
+streamlit = "*"
+moviepy = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
+
+[scripts]
+dev = "streamlit run transcribe.py"
