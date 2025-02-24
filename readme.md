@@ -2,6 +2,10 @@
 
 This application uses OpenAI's Whisper model to transcribe audio and video files with a simple interface using Streamlit.
 
+## Demo
+
+View the demo of the app on [X](https://x.com/megabored/status/1893641574413742102).
+
 ## Features
 
 - Supports MP3, MP4, WAV, and M4A file formats
@@ -57,7 +61,7 @@ pipenv install
 pipenv run dev
 ```
 
-Then open a web browser and go to the URL displayed in the console (usually http://localhost:7860).
+Then open a web browser and go to the URL displayed in the console (usually http://localhost:8501).
 
 ### Transcription Options
 - Upload audio or video files (MP3, MP4, WAV, M4A)
