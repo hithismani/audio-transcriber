@@ -1,6 +1,6 @@
 # Audio/Video Transcription App
 
-This application uses OpenAI's Whisper model to transcribe audio and video files with a simple interface using Streamlit.
+This application uses OpenAI's Whisper model to transcribe audio and video files with a simple interface using Streamlit. Also uses pyannote (via Hugging Face) for speaker diarization.
 
 ## Demo
 
@@ -11,7 +11,10 @@ View the demo of the app on [X](https://x.com/megabored/status/18936415744137421
 - Supports MP3, MP4, WAV, and M4A file formats
 - Automatically splits large files for processing (up to 25 MB)
 - Provides a simple web interface using Streamlit
-- Option to include timestamps in transcription
+- Multiple transcription options:
+  * Full Transcription
+  * Timestamped Transcription
+  * Optional Transcription with Timestamps and Speaker Identification
 - Handles both audio and video file transcription
 - Robust error handling and logging
 
@@ -20,7 +23,22 @@ View the demo of the app on [X](https://x.com/megabored/status/18936415744137421
 FFmpeg is a critical dependency for this application. Follow the installation instructions for your operating system:
 
 ### Windows, macOS, and Linux Installation Instructions
-(Keep the existing detailed FFmpeg installation guide)
+
+#### Windows
+1. Download FFmpeg from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
+2. Extract the downloaded zip file
+3. Add the `bin` folder to your system PATH
+
+#### macOS (using Homebrew)
+```bash
+brew install ffmpeg
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
 
 ## Installation
 
@@ -30,74 +48,69 @@ FFmpeg is a critical dependency for this application. Follow the installation in
    cd audio-transcriber
    ```
 
-2. Install the required packages:
+2. Create a virtual environment (recommended):
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
+
+3. Install the required packages:
    ```
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the root directory and add your OpenAI API key:
+4. Create a `.env` file in the root directory and add your API keys:
    ```
-   OPENAI_API_KEY=your_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here
+   HF_ACCESS_TOKEN=your_huggingface_token_here  # Optional, for speaker identification
    ```
+
+## Hugging Face Authentication (Optional Speaker Identification)
+
+### Speaker Identification Setup
+1. Create a Hugging Face account: [https://huggingface.co/](https://huggingface.co/)
+2. Accept user conditions for these models:
+   - [pyannote/speaker-diarization](https://huggingface.co/pyannote/speaker-diarization)
+   - [pyannote/segmentation](https://huggingface.co/pyannote/segmentation)
+3. Create a Hugging Face access token (read role): [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+4. Add the token to your `.env` file: `HF_ACCESS_TOKEN=your_huggingface_token`
+
+**Note:** Speaker identification is an experimental feature and is optional. The app will function fully without this token.
 
 ## Usage
 
-Run the application using one of the following methods:
-
-### Using Python Directly
-```
-python transcribe.py
-```
-
-### Using Pipenv
+Run the application:
 ```bash
-# Install pipenv if not already installed
-pip install pipenv
-
-# Install dependencies
-pipenv install
-
-# Run the application
-pipenv run dev
+streamlit run transcribe.py
 ```
-
-Then open a web browser and go to the URL displayed in the console (usually http://localhost:8501).
 
 ### Transcription Options
 - Upload audio or video files (MP3, MP4, WAV, M4A)
-- Toggle timestamp inclusion for more detailed transcripts
+- Choose transcription type:
+  * Full Transcription
+  * Timestamped Transcription
+  * Optional Transcription with Timestamps and Speaker Identification
 - Automatic handling of large files by splitting them into chunks
 - Direct download of transcription results
 
-## Inspiration and Background
-
-This project was inspired by [@niallmcnulty/transcript_app](https://github.com/niallmcnulty/transcript_app). While the original project used Gradio, we transitioned to Streamlit to expand the feature set and address some implementation challenges.
-
-The script was a requirement we had at [TheMindClan.com](https://web.TheMindClan.com) to help transcribe corporate mental health workshops and client calls, making our recorded content more accessible and easier to review.
-
-## Privacy Considerations
-
-When using this transcription application, it's important to be aware of the following privacy implications:
-
-- **Data Transmission**: Audio and video files are sent to OpenAI's servers for transcription. Ensure you have the necessary rights and permissions for the content you're transcribing.
-- **Sensitive Information**: Be cautious about transcribing files containing personal, confidential, or sensitive information.
-- **API Data Usage**: According to OpenAI's official policy, **data sent through the API is not used for training models**. As stated in their Business Terms: "We will not use Customer Content to develop or improve the Services." [[Source]](https://community.openai.com/t/does-open-ai-api-use-api-data-for-training/659053)
-- **Data Retention**: OpenAI has endpoint-specific data retention policies, with data typically being deleted after a certain number of days.
-- **Consent**: If transcribing recordings of other individuals, obtain their consent before processing.
-- **Local Processing**: For maximum privacy, consider using local transcription models that don't require sending data to external servers.
-
-> **Important Note**: Always review the most current [OpenAI API Terms of Service](https://openai.com/policies/api-terms/) for the most up-to-date privacy and data handling information.
-
-## Technical Details
-
-- Uses OpenAI's Whisper model for transcription
-- Supports files up to 25 MB (larger files are automatically split)
-- Provides both timestamped and plain text transcription options
-- Robust error handling and temporary file management
-
 ## Roadmap: Upcoming Features
 
-Our vision for the future of this transcription tool includes:
+### ✅ Completed Features
+- [x] Speaker Identification (Optional)
+  * Uses pyannote.audio for experimental speaker diarization
+  * Identifies distinct speakers in audio
+  * Works best with clear, separated speech
+  * Optional feature that can be enabled/disabled
+  * Provides speaker labels like "SPEAKER_00", "SPEAKER_01"
+
+- [x] Chunk Serialization
+  * Automatically splits large audio files (> 24 MB)
+  * Preserves audio quality during splitting
+  * Adds short silence between chunks to prevent cut-off words
+  * Supports files up to 25 MB
+  * Handles various audio formats (MP3, WAV, M4A, MP4)
+  * Seamlessly transcribes split chunks
+  * Reconstructs full transcription from individual chunks
 
 ### 🚧 Planned Features
 
@@ -117,25 +130,27 @@ Our vision for the future of this transcription tool includes:
    - Timestamp-based chapter segmentation
    - Export chapters as separate files or with hierarchical structure
 
+## Privacy Considerations
+
+When using this transcription application, be aware of:
+- Audio/video files are sent to OpenAI's servers for transcription
+- Ensure you have necessary rights and permissions for content
+- OpenAI API data is not used for model training
+- Obtain consent before transcribing recordings of others
 
 ## Contributing
 
-Contributions to this project are welcome. Please fork the repository and submit a pull request with your changes.
-
-## Notes
-
-- Ensure FFmpeg is correctly installed and accessible in your system PATH
-- Check that your OpenAI API key is correct and has the necessary permissions
-- Temporary files are automatically cleaned up after processing
+Contributions are welcome! Please fork the repository and submit a pull request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
-- OpenAI for providing the Whisper transcription model
-- Streamlit for the intuitive web interface framework
-- Pydub for audio file handling
-- MoviePy for video file processing
+- OpenAI for the Whisper transcription model
+- Streamlit for the web interface
+- Pyannote for speaker diarization
+- Pydub for audio processing
+- MoviePy for video file handling
 

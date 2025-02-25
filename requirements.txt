@@ -84,3 +84,4 @@ urllib3==2.3.0; python_version >= '3.9'
 uvicorn==0.34.0; python_version >= '3.9'
 watchdog==6.0.0; platform_system != 'Darwin'
 websockets==11.0.3; python_version >= '3.7'
+pyannote.audio
